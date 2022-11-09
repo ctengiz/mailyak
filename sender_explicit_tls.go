@@ -26,7 +26,7 @@ func (s *senderExplicitTLS) Send(m sendableMail) error {
 
 	// Perform the SMTP protocol conversation, using the provided TLS ServerName
 	// as the SMTP server name.
-	return smtpExchange(m, conn, s.hostname, false)
+	return smtpExchange(m, conn, s.hostname, false, false)
 }
 
 // newSenderWithExplicitTLS constructs a new senderExplicitTLS.

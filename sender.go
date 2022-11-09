@@ -38,7 +38,7 @@ type sendableMail interface {
 // conn.
 //
 // serverName must be the hostname (or IP address) of the remote endpoint.
-func smtpExchange(m sendableMail, conn net.Conn, serverName string, tryTLSUpgrade bool) error {
+func smtpExchange(m sendableMail, conn net.Conn, serverName string, tryTLSUpgrade bool, insecureSkipVerify bool) error {
 	// Connect to the SMTP server
 	c, err := smtp.NewClient(conn, serverName)
 	if err != nil {
@@ -50,7 +50,8 @@ func smtpExchange(m sendableMail, conn net.Conn, serverName string, tryTLSUpgrad
 		if ok, _ := c.Extension("STARTTLS"); ok {
 			//nolint:gosec
 			config := &tls.Config{
-				ServerName: serverName,
+				ServerName:         serverName,
+				InsecureSkipVerify: insecureSkipVerify,
 			}
 			if err = c.StartTLS(config); err != nil {
 				return err

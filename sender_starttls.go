@@ -8,9 +8,10 @@ import (
 // senderWithStartTLS connects to the remote SMTP server, upgrades the
 // connection using STARTTLS if available, and sends the email.
 type senderWithStartTLS struct {
-	hostAndPort string
-	hostname    string
-	buf         *bytes.Buffer
+	hostAndPort        string
+	hostname           string
+	buf                *bytes.Buffer
+	insecureSkipVerify bool
 }
 
 func (s *senderWithStartTLS) Send(m sendableMail) error {
@@ -20,10 +21,10 @@ func (s *senderWithStartTLS) Send(m sendableMail) error {
 	}
 	defer func() { _ = conn.Close() }()
 
-	return smtpExchange(m, conn, s.hostname, true)
+	return smtpExchange(m, conn, s.hostname, true, s.insecureSkipVerify)
 }
 
-func newSenderWithStartTLS(hostAndPort string) *senderWithStartTLS {
+func newSenderWithStartTLS(hostAndPort string, insecureSkipVerify bool) *senderWithStartTLS {
 	hostName, _, err := net.SplitHostPort(hostAndPort)
 	if err != nil {
 		// Really this should be an error, but we can't return it from the New()
@@ -40,8 +41,9 @@ func newSenderWithStartTLS(hostAndPort string) *senderWithStartTLS {
 	}
 
 	return &senderWithStartTLS{
-		hostAndPort: hostAndPort,
-		hostname:    hostName,
-		buf:         &bytes.Buffer{},
+		hostAndPort:        hostAndPort,
+		hostname:           hostName,
+		buf:                &bytes.Buffer{},
+		insecureSkipVerify: insecureSkipVerify,
 	}
 }

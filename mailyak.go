@@ -50,12 +50,12 @@ const mailDateFormat = time.RFC1123Z
 // MailYak instances created with New will switch to using TLS after connecting
 // if the remote host supports the STARTTLS command. For an explicit TLS
 // connection, or to provide a custom tls.Config, use NewWithTLS() instead.
-func New(host string, auth smtp.Auth) *MailYak {
+func New(host string, auth smtp.Auth, insecureSkpVerify bool) *MailYak {
 	return &MailYak{
 		headers:        map[string]string{},
 		host:           host,
 		auth:           auth,
-		sender:         newSenderWithStartTLS(host),
+		sender:         newSenderWithStartTLS(host, insecureSkpVerify),
 		trimRegex:      regexp.MustCompile("\r?\n"),
 		writeBccHeader: false,
 		date:           time.Now().Format(mailDateFormat),
@@ -76,9 +76,9 @@ func New(host string, auth smtp.Auth) *MailYak {
 //
 // If tlsConfig is nil, a sensible default is generated that can connect to
 // host.
-func NewWithTLS(host string, auth smtp.Auth, tlsConfig *tls.Config) (*MailYak, error) {
+func NewWithTLS(host string, auth smtp.Auth, insecureSkipVerify bool, tlsConfig *tls.Config) (*MailYak, error) {
 	// Construct a default MailYak instance
-	m := New(host, auth)
+	m := New(host, auth, insecureSkipVerify)
 
 	// Initialise the TLS sender with the (potentially nil) TLS config, swapping
 	// it with the default STARTTLS sender.
