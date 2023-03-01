@@ -21,7 +21,7 @@ type writeWrapper interface {
 
 type attachment struct {
 	filename string
-	content  io.Reader
+	content  io.ReadSeeker
 	inline   bool
 	mimeType string
 }
@@ -31,7 +31,7 @@ type attachment struct {
 //
 // r is not read until Send is called and the MIME type will be detected
 // using https://golang.org/pkg/net/http/#DetectContentType
-func (m *MailYak) Attach(name string, r io.Reader) {
+func (m *MailYak) Attach(name string, r io.ReadSeeker) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -44,7 +44,7 @@ func (m *MailYak) Attach(name string, r io.Reader) {
 // It is up to the user to ensure the mimeType is correct.
 //
 // r is not read until Send is called.
-func (m *MailYak) AttachWithMimeType(name string, r io.Reader, mimeType string) {
+func (m *MailYak) AttachWithMimeType(name string, r io.ReadSeeker, mimeType string) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -64,7 +64,7 @@ func (m *MailYak) AttachWithMimeType(name string, r io.Reader, mimeType string) 
 //
 // r is not read until Send is called and the MIME type will be detected
 // using https://golang.org/pkg/net/http/#DetectContentType
-func (m *MailYak) AttachInline(name string, r io.Reader) {
+func (m *MailYak) AttachInline(name string, r io.ReadSeeker) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -83,7 +83,7 @@ func (m *MailYak) AttachInline(name string, r io.Reader) {
 //	<img src="cid:myFileName"/>
 //
 // r is not read until Send is called.
-func (m *MailYak) AttachInlineWithMimeType(name string, r io.Reader, mimeType string) {
+func (m *MailYak) AttachInlineWithMimeType(name string, r io.ReadSeeker, mimeType string) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -103,6 +103,11 @@ func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) err
 	h := make([]byte, sniffLen)
 
 	for _, item := range m.attachments {
+		_, err := item.content.Seek(0, 0)
+		if err != nil {
+			return err
+		}
+
 		hLen, err := io.ReadFull(item.content, h)
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			return err
